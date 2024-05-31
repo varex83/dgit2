@@ -21,8 +21,8 @@ contract RepositoryContract {
     mapping(string => Object) public objects;
     mapping(string => Ref) public refs;
 
-    mapping(uint256 => Object) public objectsById;
-    uint256 public objectsCount;
+    Object[] public objectsById;
+    Ref[] public refsById;
 
     bytes public config;
 
@@ -38,8 +38,7 @@ contract RepositoryContract {
         Object memory object = Object(_hash, _ipfs_url, msg.sender);
 
         objects[_hash] = object;
-        objectsById[objectsCount] = object;
-        objectsCount++;
+        objectsById.push(object);
 
         emit ObjectSaved(_hash, _ipfs_url, msg.sender);
     }
@@ -52,6 +51,7 @@ contract RepositoryContract {
         address pusher = msg.sender;
 
         refs[_ref] = Ref(_data, true, pusher);
+        refsById.push(Ref(_data, true, pusher));
 
         emit RefAdded(_ref, _data, pusher);
     }
@@ -97,8 +97,7 @@ contract RepositoryContract {
             Object memory object = Object(_hashes[i], _ipfs_urls[i], msg.sender);
 
             objects[_hashes[i]] = object;
-            objectsById[objectsCount] = object;
-            objectsCount++;
+            objectsById.push(object);
 
             emit ObjectSaved(_hashes[i], _ipfs_urls[i], msg.sender);
         }
@@ -111,10 +110,25 @@ contract RepositoryContract {
             }
 
             address pusher = msg.sender;
-
             refs[_refs[i]] = Ref(_data[i], true, pusher);
 
             emit RefAdded(_refs[i], _data[i], pusher);
         }
+    }
+
+    function getRefs() public view returns (Ref[] memory) {
+        return refsById;
+    }
+
+    function getObjects() public view returns (Object[] memory) {
+        return objectsById;
+    }
+
+    function getObjectsLength() public view returns (uint256) {
+        return objectsById.length;
+    }
+
+    function getRefsLength() public view returns (uint256) {
+        return refsById.length;
     }
 }

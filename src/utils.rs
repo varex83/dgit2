@@ -19,7 +19,7 @@ pub async fn get_object_hashes(git_objects_path: &str) -> Result<(Vec<String>, V
                     .ok()
                     .and_then(|p| p.to_str())
                 {
-                    let hash = relative_path.replace("/", "");
+                    let hash = relative_path.replace('/', "");
                     object_hashes.push(hash);
                     object_paths.push(path.to_str().unwrap().to_string());
                 }

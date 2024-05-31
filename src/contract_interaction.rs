@@ -16,8 +16,14 @@ pub struct Object {
     pub pusher: Address,
 }
 
-impl ContractInteraction {
-    pub fn new() -> Self {
+pub struct Ref {
+    pub data: Vec<u8>,
+    pub is_active: bool,
+    pub pusher: Address,
+}
+
+impl Default for ContractInteraction {
+    fn default() -> Self {
         let http =
             Http::new(&dotenv::var("RPC_URL").unwrap_or("http://localhost:8545".to_string()))
                 .unwrap();
@@ -31,6 +37,26 @@ impl ContractInteraction {
         );
 
         ContractInteraction { contract, client }
+    }
+}
+
+impl ContractInteraction {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub async fn deploy() -> Result<Self> {
+        let http =
+            Http::new(&dotenv::var("RPC_URL").unwrap_or("http://localhost:8545".to_string()))
+                .unwrap();
+        let client = Web3::new(http);
+
+        let contract = RepositoryContract::builder(&client)
+            .gas(4_000_000.into())
+            .deploy()
+            .await?;
+
+        Ok(ContractInteraction { contract, client })
     }
 
     pub fn new_with_address(address: &str) -> Self {
@@ -153,5 +179,48 @@ impl ContractInteraction {
             .await
             .map_err(anyhow::Error::from)
             .map(|_| ())
+    }
+
+    pub async fn get_objects(&self) -> Result<Vec<Object>> {
+        let objects = self.contract.get_objects().call().await?;
+        let mut result = Vec::new();
+        for object in objects {
+            result.push(Object {
+                hash: object.0,
+                ipfs_url: object.1 .0,
+                pusher: object.2,
+            });
+        }
+        Ok(result)
+    }
+
+    pub async fn get_refs(&self) -> Result<Vec<Ref>> {
+        let objects = self.contract.get_refs().call().await?;
+        let mut result = Vec::new();
+
+        for object in objects {
+            result.push(Ref {
+                data: object.0 .0,
+                is_active: object.1,
+                pusher: object.2,
+            });
+        }
+        Ok(result)
+    }
+
+    pub async fn get_objects_length(&self) -> Result<U256> {
+        self.contract
+            .get_objects_length()
+            .call()
+            .await
+            .map_err(anyhow::Error::from)
+    }
+
+    pub async fn get_refs_length(&self) -> Result<U256> {
+        self.contract
+            .get_refs_length()
+            .call()
+            .await
+            .map_err(anyhow::Error::from)
     }
 }
