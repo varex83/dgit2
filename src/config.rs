@@ -4,13 +4,9 @@ pub struct Config;
 
 impl Config {
     pub fn get_contract_address() -> String {
-        if let Ok(address) = dotenv::var("CONTRACT_ADDRESS") {
-            address
-        } else {
-            let config = git::config::Config::get();
+        let config = git::config::Config::get();
 
-            config.repository_address
-        }
+        config.repository_address
     }
 
     pub fn get_pinata_secret_api_key() -> String {

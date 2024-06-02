@@ -5,12 +5,16 @@ use std::env;
 pub fn detect_git_dir() -> Result<String> {
     let mut current_dir = env::current_dir()?;
     loop {
-        let git_dir = current_dir.join(".git");
-        if git_dir.exists() {
-            let git_dir = git_dir.to_str().unwrap().to_string();
+        let read_dir = std::fs::read_dir(current_dir.as_path())?;
 
-            return Ok(git_dir);
+        for entry in read_dir {
+            let entry = entry?;
+            let path = entry.path();
+            if path.ends_with(".git") {
+                return Ok(path.to_str().unwrap().to_string());
+            }
         }
+
         if !current_dir.pop() {
             break;
         }

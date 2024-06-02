@@ -19,6 +19,12 @@ pub enum Commands {
         deploy: bool,
     },
 
+    #[command(about = "Clone a repository")]
+    Clone {
+        /// The URL of the repository to clone.
+        contract_address: String,
+    },
+
     #[command(about = "Sync the repository")]
     Pull,
 
@@ -29,7 +35,10 @@ pub enum Commands {
     Status,
 
     #[command(about = "Deploy a repository contract")]
-    DeployRepositoryContract,
+    Deploy,
+
+    #[command(about = "Get contract address")]
+    ContractAddress,
 
     #[command(about = "Load a file to IPFS")]
     LoadFile {

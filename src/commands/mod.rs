@@ -1,5 +1,7 @@
 mod cat_file;
+mod clone;
 mod commit;
+mod contract_address;
 mod deploy_repo_contract;
 mod hash_object;
 mod init;
@@ -9,7 +11,9 @@ mod sync;
 pub mod write_tree;
 
 pub use cat_file::*;
+pub use clone::*;
 pub use commit::*;
+pub use contract_address::*;
 pub use deploy_repo_contract::*;
 pub use hash_object::*;
 pub use init::*;

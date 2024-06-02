@@ -32,3 +32,13 @@ pub fn get_tree_object(path: &str) -> Result<TreeObject> {
 
     TreeObject::try_from(data)
 }
+
+pub fn check_if_object_exists(path: &str) -> bool {
+    let path = path.trim();
+
+    let (prefix, data) = path.split_at(2);
+
+    let object_path = format!(".git/objects/{}/{}", prefix, data);
+
+    std::path::Path::new(&object_path).exists()
+}

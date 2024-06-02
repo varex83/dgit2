@@ -5,13 +5,16 @@ use crate::git::traits::{Hash, ObjectSave};
 use crate::git::utils::detect_git_dir;
 use std::path::Path;
 
-pub async fn commit(message: Option<String>) -> anyhow::Result<()> {
+pub async fn commit(message: Option<String>) -> anyhow::Result<String> {
     let message = message.unwrap_or_else(|| "<blank>".to_string());
 
     let head = resolve_head().await?;
+
+    println!("Resolved head {:?}", head);
+
     let parent = if head.is_empty() { vec![] } else { vec![head] };
 
-    let tree_obj = TreeObject::write_tree_object(Path::new(&detect_git_dir()?))?;
+    let tree_obj = TreeObject::write_tree_object(Path::new(&detect_git_dir()?).parent().unwrap())?;
     let tree_hash = tree_obj.hash();
 
     let timestamp = std::time::SystemTime::now()
@@ -41,7 +44,5 @@ pub async fn commit(message: Option<String>) -> anyhow::Result<()> {
     let hash = commit_object.hash();
     update_head(&hash).await?;
 
-    println!("{}", hash);
-
-    Ok(())
+    Ok(hash)
 }

@@ -1,9 +1,9 @@
-use crate::git::git_fs::{get_blob_object, get_raw_object};
+use crate::git::git_fs::{check_if_object_exists, get_blob_object, get_raw_object};
 use crate::git::objects::header::ObjectType;
 use crate::git::refs::Ref;
 use anyhow::Result;
 use serde::__private::from_utf8_lossy;
-use std::io::BufRead;
+use std::path::Path;
 
 pub async fn get_head() -> Result<String> {
     let head = tokio::fs::read_to_string(".git/HEAD").await?;
@@ -42,8 +42,6 @@ pub async fn update_current_files_to_current_head() -> Result<()> {
     // get hash of commit / tree
     let head = resolve_head().await?;
 
-    println!("{:?}", head);
-
     // check if it's a commit or a tree
     let blob = get_blob_object(&head)?;
 
@@ -62,26 +60,30 @@ pub async fn update_current_files_to_current_head() -> Result<()> {
         head
     };
 
+    if !check_if_object_exists(&tree_hash) {
+        println!("WARN: nothing to update");
+        return Ok(());
+    }
+
     let raw_object = get_raw_object(&tree_hash)?;
 
     let tree_obj = crate::git::objects::tree::TreeObject::try_from(raw_object)?;
 
     let files = tree_obj.get_files_recursive(".").await?;
 
-    println!("{:?}", files);
+    // save files to disk
+    for (path, data) in files {
+        let path = Path::new(&path);
 
-    // for file in files {
-    //     let file = file?;
-    //     let file = file.0;
-    //     let file = file.split_at(2);
-    //     let file = format!(".git/objects/{}/{}", file.0, file.1);
-    //     let file = std::fs::read(file)?;
-    //     let blob_obj = crate::git::objects::blob::BlobObject::try_from(file)?;
-    //     let file = blob_obj.get_file().await?;
-    //     let path = std::path::Path::new(&file.0);
-    //     let data = file.1;
-    //     tokio::fs::write(path, data).await?;
-    // }
+        // create parent directories
+        if let Some(parent) = path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
+        tokio::fs::write(path, data).await?;
+
+        println!("Saved file: {:?}", path);
+    }
 
     Ok(())
 }

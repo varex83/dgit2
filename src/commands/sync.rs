@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::git::head::update_current_files_to_current_head;
 use crate::utils::get_object_hashes;
 use colored::*;
 use ethcontract::jsonrpc::serde::__private::from_utf8_lossy;
@@ -55,6 +56,14 @@ pub async fn sync_up(contract_address: String) -> anyhow::Result<usize> {
         }
     }
 
+    // get all refs and push them to the contract
+    let refs = crate::git::refs::Ref::get_all_refs().await?;
+
+    for (ref_name, ref_data) in refs {
+        contract.add_ref(ref_name.clone(), ref_data).await?;
+        println!("{}", format!("Uploaded and saved ref: {}", ref_name).cyan());
+    }
+
     println!(
         "{}",
         format!("Total objects synced up: {}", ipfs_hashes.len()).green()
@@ -97,6 +106,43 @@ pub async fn sync_down(contract_address: String) -> anyhow::Result<usize> {
         count += 1;
     }
 
+    let ref_count = contract.get_refs_length().await?.as_u64();
+
+    let mut ref_count_updated = 0;
+
+    for index in 0..ref_count {
+        let ref_ = contract.get_ref_by_id(U256::from(index)).await?;
+        let ref_name = ref_.name;
+        let ref_data = ref_.data;
+
+        // check if ref exists
+        let path = format!("./.git/{}", ref_name);
+        let content = tokio::fs::read(path).await.unwrap_or(vec![]);
+
+        if content == ref_data {
+            println!("{}", format!("Ref already exists: {}", ref_name).blue());
+            continue;
+        } else {
+            ref_count_updated += 1;
+        }
+
+        // save ref to disk
+        let path = format!("./.git/{}", ref_name);
+
+        // create parent directories if they don't exist
+        let parent = std::path::Path::new(&path).parent().unwrap();
+        let _ = tokio::fs::create_dir_all(parent).await;
+
+        tokio::fs::write(path, ref_data).await?;
+    }
+
     println!("{}", format!("Total objects synced down: {}", count).blue());
+    println!(
+        "{}",
+        format!("Total refs synced down: {}", ref_count_updated).blue()
+    );
+
+    update_current_files_to_current_head().await?;
+
     Ok(count)
 }

@@ -24,10 +24,11 @@ async fn main() -> anyhow::Result<()> {
 
             commands::init(contract_address).await
         }
+        Commands::Clone { contract_address } => commands::clone(contract_address).await,
         Commands::Pull => commands::pull().await,
         Commands::Push => commands::push().await,
         Commands::Status => commands::status().await,
-        Commands::DeployRepositoryContract => commands::deploy_repo_contract().await,
+        Commands::Deploy => commands::deploy_repo_contract().await,
         Commands::LoadFile { file_path } => {
             load_to_ipfs(file_path.as_ref().unwrap()).await.map(|_| ())
         }
@@ -36,7 +37,8 @@ async fn main() -> anyhow::Result<()> {
         Commands::HashObject { write } => commands::hash_object(write.as_str()),
         Commands::LsTree { path, name_only } => commands::ls_tree(path.as_str(), name_only),
         Commands::WriteTree => write_tree("."),
-        Commands::Commit { message } => commands::commit(message).await,
+        Commands::ContractAddress => commands::contract_address().await,
+        Commands::Commit { message } => commands::commit(message).await.map(|_| ()),
         Commands::Debug => {
             println!("Debugging");
             update_current_files_to_current_head().await

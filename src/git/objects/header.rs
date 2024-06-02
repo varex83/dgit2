@@ -1,5 +1,6 @@
 use crate::git::traits::ToBytes;
 use anyhow::{Error, Result};
+use serde::__private::from_utf8_lossy;
 
 #[derive(Debug, PartialOrd, PartialEq, Clone)]
 pub struct ObjectHeader {
@@ -54,6 +55,7 @@ impl TryFrom<Vec<u8>> for ObjectHeader {
     type Error = Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
+        println!("value: {:?}", from_utf8_lossy(&value));
         let object_type = {
             if &value[..ObjectType::Blob.len()] == ObjectType::Blob.to_string().as_bytes() {
                 ObjectType::Blob
@@ -64,7 +66,10 @@ impl TryFrom<Vec<u8>> for ObjectHeader {
             {
                 ObjectType::Commit
             } else {
-                anyhow::bail!("Invalid object header");
+                anyhow::bail!(
+                    "Invalid object header: {}",
+                    std::str::from_utf8(&value).unwrap()
+                );
             }
         };
 
@@ -77,12 +82,11 @@ impl TryFrom<Vec<u8>> for ObjectHeader {
                 size *= 10;
                 size += <u8 as Into<usize>>::into(*item - b'0');
             } else {
-                anyhow::bail!("Invalid object header");
+                anyhow::bail!(
+                    "Invalid object header: {}",
+                    std::str::from_utf8(&value).unwrap()
+                );
             }
-        }
-
-        if size == 0 {
-            anyhow::bail!("Invalid object header");
         }
 
         Ok(ObjectHeader { object_type, size })

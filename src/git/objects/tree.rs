@@ -1,10 +1,9 @@
-use crate::git::git_fs::get_tree_object;
+use crate::git::git_fs::{get_blob_object, get_tree_object};
 use crate::git::objects::blob::BlobObject;
 use crate::git::objects::header::{ObjectHeader, ObjectType};
 use crate::git::traits::{Hash, ObjectSave, ToBytes};
 use anyhow::{bail, Error, Result};
-use serde::__private::from_utf8_lossy;
-use std::path::{Path, Prefix};
+use std::path::Path;
 
 #[derive(Debug)]
 pub struct TreeObject {
@@ -30,7 +29,6 @@ impl TreeObject {
 
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
-            println!("{:?}", entry.path());
 
             // if it's .git directory, skip it
             let path = entry.path();
@@ -78,11 +76,13 @@ impl TreeObject {
         Ok(tree)
     }
 
+    // return the vector of (path, data)
     #[async_recursion::async_recursion]
-    pub async fn get_files_recursive(&self, prefix: &str) -> Result<Vec<String>> {
+    pub async fn get_files_recursive(&self, prefix: &str) -> Result<Vec<(String, Vec<u8>)>> {
         let mut files = Vec::new();
 
         for entry in &self.entries {
+            // println!("{:?}", entry);
             if entry.mode == 40000 {
                 let tree = get_tree_object(&entry.hash)?;
 
@@ -91,7 +91,9 @@ impl TreeObject {
                         .await?,
                 );
             } else {
-                files.push(entry.name.clone());
+                let blob = get_blob_object(&entry.hash)?;
+
+                files.push((format!("{}/{}", prefix, entry.name), blob.data));
             }
         }
 
@@ -119,7 +121,6 @@ impl TryFrom<Vec<u8>> for TreeEntry {
     type Error = Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
-        println!("{:?}", from_utf8_lossy(&value));
         let space_index = value.iter().position(|&x| x == b' ').unwrap();
         let null_index = value.iter().position(|&x| x == 0).unwrap();
 

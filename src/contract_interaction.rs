@@ -17,6 +17,7 @@ pub struct Object {
 }
 
 pub struct Ref {
+    pub name: String,
     pub data: Vec<u8>,
     pub is_active: bool,
     pub pusher: Address,
@@ -57,6 +58,17 @@ impl ContractInteraction {
             .await?;
 
         Ok(ContractInteraction { contract, client })
+    }
+
+    pub fn address(&self) -> String {
+        let bytes = self.contract.address().to_fixed_bytes();
+
+        let mut address = "0x".to_string();
+        for byte in bytes {
+            address.push_str(&format!("{:02x}", byte));
+        }
+
+        address
     }
 
     pub fn new_with_address(address: &str) -> Self {
@@ -200,9 +212,10 @@ impl ContractInteraction {
 
         for object in objects {
             result.push(Ref {
-                data: object.0 .0,
-                is_active: object.1,
-                pusher: object.2,
+                name: object.0,
+                data: object.1 .0,
+                is_active: object.2,
+                pusher: object.3,
             });
         }
         Ok(result)
@@ -222,5 +235,21 @@ impl ContractInteraction {
             .call()
             .await
             .map_err(anyhow::Error::from)
+    }
+
+    pub async fn get_ref_by_id(&self, id: U256) -> Result<Ref> {
+        let (name, data, is_active, pusher) = self
+            .contract
+            .get_ref_by_id(id)
+            .call()
+            .await
+            .map_err(anyhow::Error::from)?;
+
+        Ok(Ref {
+            name,
+            data: data.0,
+            is_active,
+            pusher,
+        })
     }
 }

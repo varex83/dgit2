@@ -12,9 +12,10 @@ contract RepositoryContract {
     }
 
     struct Ref {
+        string name;
         bytes data;
-        bool is_active;
 
+        bool is_active;
         address pusher;
     }
 
@@ -44,14 +45,13 @@ contract RepositoryContract {
     }
 
     function addRef(string memory _ref, bytes memory _data) public {
-        if (refs[_ref].data.length > 0) {
-            return;
-        }
-
         address pusher = msg.sender;
 
-        refs[_ref] = Ref(_data, true, pusher);
-        refsById.push(Ref(_data, true, pusher));
+        if (refs[_ref].data.length == 0) {
+            refsById.push(Ref(_ref, _data, true, pusher));
+        }
+
+        refs[_ref] = Ref(_ref, _data, true, pusher);
 
         emit RefAdded(_ref, _data, pusher);
     }
@@ -110,7 +110,7 @@ contract RepositoryContract {
             }
 
             address pusher = msg.sender;
-            refs[_refs[i]] = Ref(_data[i], true, pusher);
+            refs[_refs[i]] = Ref(_refs[i], _data[i], true, pusher);
 
             emit RefAdded(_refs[i], _data[i], pusher);
         }
@@ -130,5 +130,9 @@ contract RepositoryContract {
 
     function getRefsLength() public view returns (uint256) {
         return refsById.length;
+    }
+
+    function getRefById(uint256 _id) public view returns (Ref memory) {
+        return refsById[_id];
     }
 }
