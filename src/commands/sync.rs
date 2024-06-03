@@ -119,10 +119,7 @@ pub async fn sync_down(contract_address: String) -> anyhow::Result<usize> {
         let path = format!("./.git/{}", ref_name);
         let content = tokio::fs::read(path).await.unwrap_or(vec![]);
 
-        if content == ref_data {
-            println!("{}", format!("Ref already exists: {}", ref_name).blue());
-            continue;
-        } else {
+        if content != ref_data {
             ref_count_updated += 1;
         }
 

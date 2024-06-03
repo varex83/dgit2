@@ -1,6 +1,5 @@
 use crate::git::traits::ToBytes;
 use anyhow::{Error, Result};
-use serde::__private::from_utf8_lossy;
 
 #[derive(Debug, PartialOrd, PartialEq, Clone)]
 pub struct ObjectHeader {
@@ -55,7 +54,6 @@ impl TryFrom<Vec<u8>> for ObjectHeader {
     type Error = Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
-        println!("value: {:?}", from_utf8_lossy(&value));
         let object_type = {
             if &value[..ObjectType::Blob.len()] == ObjectType::Blob.to_string().as_bytes() {
                 ObjectType::Blob

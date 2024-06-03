@@ -89,8 +89,6 @@ impl Ref {
             let ref_path = ref_path.split(".git/").collect::<Vec<&str>>()[1];
             let content = tokio::fs::read(entry.path()).await?;
 
-            println!("Ref: {:?}", (ref_path, &content));
-
             result.push((ref_path.to_string(), content));
         }
 

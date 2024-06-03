@@ -30,14 +30,6 @@ pub async fn resolve_head() -> Result<String> {
     ref_.resolve().await
 }
 
-pub async fn resolve_head_to_tree() -> Result<String> {
-    let head = resolve_head().await?;
-
-    let _head = get_raw_object(&head)?;
-
-    unimplemented!()
-}
-
 pub async fn update_current_files_to_current_head() -> Result<()> {
     // get hash of commit / tree
     let head = resolve_head().await?;
@@ -79,10 +71,7 @@ pub async fn update_current_files_to_current_head() -> Result<()> {
         if let Some(parent) = path.parent() {
             tokio::fs::create_dir_all(parent).await?;
         }
-
         tokio::fs::write(path, data).await?;
-
-        println!("Saved file: {:?}", path);
     }
 
     Ok(())

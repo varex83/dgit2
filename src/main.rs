@@ -4,7 +4,6 @@ use dgit2::cli::Cli;
 use dgit2::cli::Commands;
 use dgit2::commands;
 use dgit2::commands::{cat_file, write_tree};
-use dgit2::git::head::update_current_files_to_current_head;
 use dgit2::ipfs::{download_from_ipfs, load_to_ipfs};
 
 #[tokio::main]
@@ -19,16 +18,16 @@ async fn main() -> anyhow::Result<()> {
             deploy,
         } => {
             if deploy {
-                commands::deploy_repo_contract().await?;
+                commands::deploy_repo_contract().await.map(|_| ())
+            } else {
+                commands::init(contract_address.unwrap()).await
             }
-
-            commands::init(contract_address).await
         }
         Commands::Clone { contract_address } => commands::clone(contract_address).await,
         Commands::Pull => commands::pull().await,
         Commands::Push => commands::push().await,
         Commands::Status => commands::status().await,
-        Commands::Deploy => commands::deploy_repo_contract().await,
+        Commands::Deploy => commands::deploy_repo_contract().await.map(|_| ()),
         Commands::LoadFile { file_path } => {
             load_to_ipfs(file_path.as_ref().unwrap()).await.map(|_| ())
         }
@@ -39,10 +38,6 @@ async fn main() -> anyhow::Result<()> {
         Commands::WriteTree => write_tree("."),
         Commands::ContractAddress => commands::contract_address().await,
         Commands::Commit { message } => commands::commit(message).await.map(|_| ()),
-        Commands::Debug => {
-            println!("Debugging");
-            update_current_files_to_current_head().await
-        }
         #[allow(unreachable_patterns)]
         _ => bail!("Not implemented yet"),
     }

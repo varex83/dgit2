@@ -1,15 +1,22 @@
 use crate::commands::init;
 use crate::contract_interaction::ContractInteraction;
+use colored::Colorize;
 
-pub async fn deploy_repo_contract() -> anyhow::Result<()> {
-    println!("Deploying repository contract");
+pub async fn deploy_repo_contract() -> anyhow::Result<String> {
+    println!(
+        "{}",
+        format!("{}", "Deploying repository contract...").bright_blue()
+    );
 
     let contract = ContractInteraction::deploy().await?;
     let address = contract.address();
 
-    println!("Deployed repository contract with address: {}", address);
+    println!(
+        "{}",
+        format!("Deployed repository contract with address: {}", address).green()
+    );
 
-    init(address).await?;
+    init(address.clone()).await?;
 
-    Ok(())
+    Ok(address)
 }

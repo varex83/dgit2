@@ -8,12 +8,13 @@ pub struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
+#[clap(about = "A distributed Git")]
 pub enum Commands {
     #[command(about = "Initialize a repository")]
     Init {
         /// The contract address of the repository.
         #[arg(short, long)]
-        contract_address: String,
+        contract_address: Option<String>,
         /// Deploy the repository contract.
         #[arg(short, long)]
         deploy: bool,
@@ -89,6 +90,4 @@ pub enum Commands {
         #[arg(short, long)]
         name_only: bool,
     },
-
-    Debug,
 }

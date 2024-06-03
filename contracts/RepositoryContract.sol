@@ -47,10 +47,7 @@ contract RepositoryContract {
     function addRef(string memory _ref, bytes memory _data) public {
         address pusher = msg.sender;
 
-        if (refs[_ref].data.length == 0) {
-            refsById.push(Ref(_ref, _data, true, pusher));
-        }
-
+        refsById.push(Ref(_ref, _data, true, pusher));
         refs[_ref] = Ref(_ref, _data, true, pusher);
 
         emit RefAdded(_ref, _data, pusher);
@@ -105,10 +102,6 @@ contract RepositoryContract {
 
     function addRefs(string[] memory _refs, bytes[] memory _data) public {
         for (uint256 i = 0; i < _refs.length; i++) {
-            if (refs[_refs[i]].data.length > 0) {
-                continue;
-            }
-
             address pusher = msg.sender;
             refs[_refs[i]] = Ref(_refs[i], _data[i], true, pusher);
 

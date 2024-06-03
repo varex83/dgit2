@@ -10,8 +10,6 @@ pub async fn commit(message: Option<String>) -> anyhow::Result<String> {
 
     let head = resolve_head().await?;
 
-    println!("Resolved head {:?}", head);
-
     let parent = if head.is_empty() { vec![] } else { vec![head] };
 
     let tree_obj = TreeObject::write_tree_object(Path::new(&detect_git_dir()?).parent().unwrap())?;
